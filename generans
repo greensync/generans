@@ -1,0 +1,80 @@
+#!/usr/bin/env ruby
+
+# Copyright (c) 2014 GreenSync Pty Ltd.
+#
+# This file is part of generans.
+#
+# generans is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# generans is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with generans.  If not, see <http://www.gnu.org/licenses/lgpl.html>.
+
+require 'optparse'
+require 'phidgets-ffi'
+require 'pry'
+
+require_relative 'src/generator.rb'
+
+options = {timeout_s: 1000}
+OptionParser.new do |opts|
+  opts.banner = 'Generates pulses on a Phidget 1018 I/O board.'
+  opts.on('-d', '--duty DUTY', 'Duty cycle (%)') do |arg|
+    options[:duty_percent] = arg.to_f
+  end
+  opts.on('-f', '--frequency HZ', 'Frequency of pulses to generate (Hz)') do |arg|
+    options[:frequency_hz] = arg.to_f
+  end
+  opts.on('-o', '--output OUTPUT', 'Output port to which to send pulses (0 - 7)') do |arg|
+    options[:output_num] = arg.to_i
+  end
+  opts.on('-p', '--pulses NUM', 'Number of pulses to generate') do |arg|
+    options[:pulses] = arg.to_i
+  end
+  opts.on('-t', '--timeout S', 'Connection timeout (s)') do |arg|
+    options[:timeout_s] = arg.to_f
+  end
+  opts.on('-v', '--verbose', 'Be chatty about status to STDOUT') do |arg|
+    options[:verbose] = arg
+  end
+end.parse!
+
+result = -1
+begin
+  errors = []
+  errors << 'You must specify the duty cycle with --duty.' unless options[:duty_percent]
+  errors << 'The duty cycle must be > 0% and <= 100%.' unless options[:duty_percent] && options[:duty_percent] > 0 && options[:duty_percent] <= 100
+  errors << 'You must specify the frequency with --frequency.' unless options[:frequency_hz]
+  errors << 'The frequency must be > 0Hz.' unless options[:frequency_hz] && options[:frequency_hz] > 0
+  errors << 'You must specify the output port number with --output.' unless options[:output_num]
+  errors << 'The output port number must be >= 0 and <= 7.' unless options[:output_num] && options[:output_num] >= 0 && options[:output_num] <= 7
+  errors << 'You must specify the number of pulses with --pulses.' unless options[:pulses]
+  errors << 'The number of pulses must be > 0.' unless options[:pulses] && options[:pulses] > 0
+
+  if errors.empty?
+    $stdout.puts "connecting to device with timeout #{options[:timeout_s]}s" if options[:verbose]
+    device = Phidgets::InterfaceKit.new
+    device.wait_for_attachment options[:timeout_s] * 1000
+
+    output = device.outputs[options[:output_num]]
+    generator = Generator.new(options[:verbose])
+    generator.generate(output_port: output, frequency_hz: options[:frequency_hz], duty_percent: options[:duty_percent], num_pulses: options[:pulses])
+    result = 0
+  else
+    $stderr.puts errors.join("\n") unless errors.empty?
+    result = -1
+  end
+rescue Exception => e
+  $stderr.puts "an error occurred: #{e.to_s} #{e.backtrace}"
+ensure
+  device.close if device
+end
+
+exit(result)

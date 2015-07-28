@@ -23,7 +23,7 @@ A pulse generator and DSL for the Phidget 1018 and 1018_2 I/O boards.
 ![generans in action](http://s2.postimg.org/burh3dgqh/oscilloscope_capture.png)
 
 ## installation
-1. [Install Ruby](https://www.ruby-lang.org/en/installation/) 2.0 (or later) and [bundler](http://bundler.io/#getting-started).
+1. [Install Ruby](https://www.ruby-lang.org/en/installation/) (2.0 or later, 2.2.2 recommended) and [bundler](http://bundler.io/#getting-started).
 2. Install the [Phidget drivers](http://www.phidgets.com/docs/Operating_System_Support).
 3. run `bundle install` to fetch and install all the Ruby libraries needed by generans.
 

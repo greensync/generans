@@ -1,4 +1,4 @@
-# Copyright (c) 2014 GreenSync Pty Ltd.
+# Copyright (c) 2015 GreenSync Pty Ltd.
 #
 # This file is part of generans.
 #

@@ -22,7 +22,7 @@ describe Generator do
   let(:generator) { Generator.new(false) }
 
   describe '#generate' do
-    before { generator.stub(:sleep) }
+    before { allow(generator).to receive(:sleep) }
     let(:output) do
       o = double(:output)
       allow(o).to receive(:state=)
@@ -33,21 +33,21 @@ describe Generator do
       before { generator.generate(output_port: output, frequency_hz: 2, duty_percent: 50, num_pulses: 2) }
 
       it 'sets the state false at the start, at the end, and during each pulses' do
-        output.should have_received(:state=).with(false).exactly(4).times
+        expect(output).to have_received(:state=).with(false).exactly(4).times
       end
 
       it 'sets the state true at the start of each pulse' do
-        output.should have_received(:state=).with(true).exactly(2).times
+        expect(output).to have_received(:state=).with(true).exactly(2).times
       end
 
       it 'sleeps for 0.25s per level change at 2Hz' do
-        generator.should have_received(:sleep).with(0.25).exactly(4).times
+        expect(generator).to have_received(:sleep).with(0.25).exactly(4).times
       end
     end
 
     context 'on failure' do
       before do
-        generator.stub(:sleep).and_raise
+        allow(generator).to receive(:sleep).and_raise
         begin
           generator.generate(output_port: output, frequency_hz: 2, duty_percent: 50, num_pulses: 2)
         rescue
@@ -56,7 +56,7 @@ describe Generator do
       end
 
       it 'sets the state false at the start, and again after the exception is raised' do
-        output.should have_received(:state=).with(false).exactly(2).times
+        expect(output).to have_received(:state=).with(false).exactly(2).times
       end
 
     end
